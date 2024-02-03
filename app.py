@@ -200,5 +200,5 @@ def process_video_logic(video_file):
 
     return output_pdf
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# if __name__ == '__main__':
+#     app.run(debug=True)
