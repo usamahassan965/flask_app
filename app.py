@@ -3,7 +3,7 @@ from reportlab.pdfgen import canvas
 from io import BytesIO
 from PIL import Image
 from reportlab.lib.utils import ImageReader
-import pytesseract
+# import pytesseract
 from tqdm import tqdm
 import numpy as np
 from flask import Flask, request,jsonify, send_file
@@ -13,7 +13,7 @@ from flask import Flask, request,jsonify, send_file
 import os
 # from wtforms.validators import InputRequired
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Users\HP\vscode_projects\vidtopdf\Code\API\Tesseract-OCR\tesseract.exe"
+# pytesseract.pytesseract.tesseract_cmd = r"C:\Users\HP\vscode_projects\vidtopdf\Code\API\Tesseract-OCR\tesseract.exe"
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/files'
@@ -63,54 +63,54 @@ def is_similar(frame1, frame2, threshold=0.9):
     intersection = cv2.compareHist(hist_frame1, hist_frame2, cv2.HISTCMP_INTERSECT)
     return intersection >= threshold
 
-def construct_dict(frame):
-    word_coord = {}
-    gray_frame = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-    _, frame = cv2.threshold(gray_frame, 200, 255, cv2.THRESH_BINARY)
-    detections = pytesseract.image_to_data(frame)
+# def construct_dict(frame):
+#     word_coord = {}
+#     gray_frame = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+#     _, frame = cv2.threshold(gray_frame, 200, 255, cv2.THRESH_BINARY)
+#     detections = pytesseract.image_to_data(frame)
 
-    for entry in detections.splitlines()[1:]:  # Skip the header line
-        data = entry.split('\t')
+#     for entry in detections.splitlines()[1:]:  # Skip the header line
+#         data = entry.split('\t')
 
-        if len(data) == 12 and data[11] != '-1':  # Ensure it's a valid entry with non-empty text
-            word = data[11]
-            x, y, w, h = map(float,(data[6], data[7], data[8], data[9]))
-            coordinates = (x, y, x + w, y + h)
-            word_coord[word] = coordinates
+#         if len(data) == 12 and data[11] != '-1':  # Ensure it's a valid entry with non-empty text
+#             word = data[11]
+#             x, y, w, h = map(float,(data[6], data[7], data[8], data[9]))
+#             coordinates = (x, y, x + w, y + h)
+#             word_coord[word] = coordinates
 
-    return word_coord
+#     return word_coord
 
-def similar_patch(word_coord1,word_coord2):
-    similar_dict = {}
-    list_k1 = list(word_coord1.keys())
-    list_k2 = list(word_coord2.keys())
+# def similar_patch(word_coord1,word_coord2):
+#     similar_dict = {}
+#     list_k1 = list(word_coord1.keys())
+#     list_k2 = list(word_coord2.keys())
 
-    for w1,k1 in word_coord2.items():
-        for w2,k2 in word_coord1.items():
-            # print(f'w1: {w1}, w2: {w2}')
-            if len(similar_dict) != 0:
-                if w1 == w2 and (list_k2[list_k2.index(w1)-1]==list_k1[list_k1.index(w1)-1]):
-                    similar_dict[w1] = k1
-                    break
-                else:
-                    continue
-            else:
-                if w1 == w2:
-                    similar_dict[w1] = k1
-                    break
-                else:
-                    continue
-    return similar_dict
+#     for w1,k1 in word_coord2.items():
+#         for w2,k2 in word_coord1.items():
+#             # print(f'w1: {w1}, w2: {w2}')
+#             if len(similar_dict) != 0:
+#                 if w1 == w2 and (list_k2[list_k2.index(w1)-1]==list_k1[list_k1.index(w1)-1]):
+#                     similar_dict[w1] = k1
+#                     break
+#                 else:
+#                     continue
+#             else:
+#                 if w1 == w2:
+#                     similar_dict[w1] = k1
+#                     break
+#                 else:
+#                     continue
+#     return similar_dict
 
 
-def ocr_masking(next_frame, similar_dict):
-    end_coord = list(similar_dict.items())[-1][1]
-    new_y_coord = int(end_coord[1])
+# def ocr_masking(next_frame, similar_dict):
+#     end_coord = list(similar_dict.items())[-1][1]
+#     new_y_coord = int(end_coord[1])
 
-    (x1, y1, x2, y2) = (1, new_y_coord, 886 , 260)
-    next_frame[y2:y1,x1:x2,:] = 0
+#     (x1, y1, x2, y2) = (1, new_y_coord, 886 , 260)
+#     next_frame[y2:y1,x1:x2,:] = 0
 
-    return next_frame
+#     return next_frame
 
 
 def frames_to_pdf(frames, output_pdf):
@@ -180,25 +180,25 @@ def upload_file():
 
 def process_video_logic(video_file):
     frames = extract_frames(video_file, frame_rate=1, threshold=0.89)
-    print(len(frames))
-    masked_frames = []
-    for i in tqdm(range(len(frames))):
-        if i == 0:
-            masked_frames.append(frames[i])
-        else:
-            coord1 = construct_dict(frames[i-1])
-            coord2 = construct_dict(frames[i])
-            similar_dict = similar_patch(word_coord1=coord1, word_coord2=coord2)
-            if len(similar_dict) > 10:
-                masked_frame = ocr_masking(frames[i], similar_dict)
-                masked_frames.append(masked_frame)
-            else:
-                masked_frames.append(frames[i])
+    # print(len(frames))
+    # masked_frames = []
+    # for i in tqdm(range(len(frames))):
+    #     if i == 0:
+    #         masked_frames.append(frames[i])
+    #     else:
+    #         coord1 = construct_dict(frames[i-1])
+    #         coord2 = construct_dict(frames[i])
+    #         similar_dict = similar_patch(word_coord1=coord1, word_coord2=coord2)
+    #         if len(similar_dict) > 10:
+    #             masked_frame = ocr_masking(frames[i], similar_dict)
+    #             masked_frames.append(masked_frame)
+    #         else:
+    #             masked_frames.append(frames[i])
 
     output_pdf = 'Output_vid1_mod.pdf'
-    frames_to_pdf(masked_frames, output_pdf)
+    frames_to_pdf(frames, output_pdf)
 
     return output_pdf
 
-# if __name__ == '__main__':
-#     app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
